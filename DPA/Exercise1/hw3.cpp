@@ -26,7 +26,10 @@ int main(int argc, char **argv) {
 
     srand(time(NULL) + rank);
 
+    // Start the timer
     double start_time = MPI_Wtime();
+
+    // Generate random points and compute the number of points inside the circle for each process
     for (int i = 0; i < sub_interval; i++) {
         x = double(rand() % (INTERVAL + 1)) / INTERVAL;
         y = double(rand() % (INTERVAL + 1)) / INTERVAL;
@@ -36,9 +39,11 @@ int main(int argc, char **argv) {
         sub_square_points++;
     }
 
+    // Reduce the results from all processes and compute the final result
     MPI_Reduce(&sub_circle_points, &circle_points, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&sub_square_points, &square_points, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
+    
+    // Print the final result and the running time for the root process
     if (rank == 0) {
         pi = double(4 * circle_points) / square_points;
         double end_time = MPI_Wtime();
@@ -46,7 +51,7 @@ int main(int argc, char **argv) {
         double running_time = (end_time - start_time) * 1000.0;
         cout << "Running time: " << running_time << " ms" << endl;
     }
-
+    // MPI environment finalized
     MPI_Finalize();
     return 0;
 }

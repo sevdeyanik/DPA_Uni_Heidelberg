@@ -1,7 +1,10 @@
 #include <iostream>
 #include <mpi.h>
 
+using namespace std;
+
 int main(int argc, char** argv) {
+    // Initialize MPI
     MPI_Init(&argc, &argv);
 
     int rank, size;
@@ -48,12 +51,13 @@ int main(int argc, char** argv) {
     end_reverse = MPI_Wtime();
     total_reverse = (end_reverse - start_reverse) * 1000.0;
 
-    std::cout << "Process " << rank << " received data in normal order: " << data << std::endl;
-    std::cout << "Total time in normal order: " << total_normal << " seconds" << std::endl;
+    cout << "Process " << rank << " received data in normal order: " << data << endl;
+    cout << "Total time in normal order: " << total_normal << " seconds" << endl;
 
-    std::cout << "Process " << rank << " received data in reverse order: " << data << std::endl;
-    std::cout << "Total time in reverse order: " << total_reverse << " seconds" << std::endl;
-
+    cout << "Process " << rank << " received data in reverse order: " << data << endl;
+    cout << "Total time in reverse order: " << total_reverse << " seconds" << endl;
+    
+    // Finalize MPI
     MPI_Finalize();
     return 0;
 }
