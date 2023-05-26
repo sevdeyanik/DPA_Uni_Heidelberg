@@ -1,43 +1,59 @@
 #include <iostream>
+#include <vector>
+#include <cmath>
+#include <mpi.h>
+
 using namespace std;
 
-int find_first_one(int arr[], int n) {
-    int step = 1;
-    int found_index = -1;
+int find_first_one(vector<bool>& A) {
+    int n = A.size();
+    int num_procs, rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    while (step < n) {
-        // Each processor checks its respective part of the array
-        int local_index = -1;
-        for (int i = found_index + step; i < n; i += step) {
-            if (arr[i] == 1) {
-                local_index = i;
-                break;
-            }
+    int local_size = n / num_procs;
+    int local_start = rank * local_size;
+    int local_end = local_start + local_size - 1;
+
+    int local_first_one = -1;
+
+    // Search for the first one in the local portion of the array
+    for (int i = local_start; i <= local_end; i++) {
+        if (A[i]) {
+            local_first_one = i;
+            break;
         }
-
-        // Each processor performs an EREW exclusive write to update the minimum index
-        if (local_index != -1) {
-            found_index = (found_index == -1) ? local_index : min(found_index, local_index);
-        }
-
-        // Double the step value
-        step *= 2;
     }
 
-    return found_index;
+    int global_first_one;
+    MPI_Reduce(&local_first_one, &global_first_one, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        if (global_first_one != -1) {
+            cout << "First one found at index: " << global_first_one << endl;
+        } else {
+            cout << "No one found!" << endl;
+        }
+    }
+
+    return 0;
 }
 
-int main() {
-    // Initialize array of boolean elements
-    int arr[7] = {0, 0, 0, 0, 1, 1, 1};
-    int size = sizeof(arr);
-    int index = find_first_one(arr, size);
+int main(int argc, char** argv) {
+    MPI_Init(&argc, &argv);
 
-    if (index != -1) {
-        cout << "First occurrence of 1 found at index: " << index << endl;
-    } else {
-        cout << "No 1 found in the array." << endl;
-    }
+    vector<bool> A;
+    A.push_back(0);
+    A.push_back(0);
+    A.push_back(0);
+    A.push_back(1);
+    A.push_back(0);
+    A.push_back(0);
+    A.push_back(1);
+    A.push_back(1);
 
+    find_first_one(A);
+
+    MPI_Finalize();
     return 0;
 }
